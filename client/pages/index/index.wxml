@@ -1,0 +1,119 @@
+<!-- index.wxml -->
+<view class="page">
+
+<!-- 顶部标题区 -->
+<view class="header">
+  <view class="header-icon">📁</view>
+  <view class="header-title">文件快传</view>
+  <view class="header-desc">直接传输到指定电脑</view>
+</view>
+
+<!-- 服务器状态卡片 -->
+<view class="card status-card">
+  <view class="status-row">
+    <text class="status-label">服务器地址</text>
+    <text class="status-value">{{serverUrl}}</text>
+  </view>
+  <view class="status-row">
+    <text class="status-label">连接状态</text>
+    <!-- 修复：使用 wx:if 代替三元表达式 -->
+    <view wx:if="{{connectionStatus === 'connected'}}" class="status-badge success">
+      <view class="status-dot"></view>
+      <text>已连接</text>
+    </view>
+    <view wx:else class="status-badge error">
+      <view class="status-dot"></view>
+      <text>连接中...</text>
+    </view>
+  </view>
+</view>
+
+<!-- 文件选择卡片 -->
+<view class="card">
+  <!-- 选择文件按钮 -->
+  <button class="choose-file-btn" bindtap="chooseFromChat" disabled="{{uploading || connectionStatus !== 'connected'}}">
+    <view class="btn-content">
+      <text class="big-icon">📎</text>
+      <view class="btn-text">
+        <text class="btn-main">{{uploading ? '上传中...' : '从聊天记录选择文件'}}</text>
+        <text class="btn-sub">支持图片、视频、文档等，最多9个</text>
+      </view>
+      <text class="btn-arrow">›</text>
+    </view>
+  </button>
+
+  <!-- 文件列表 -->
+  <view class="file-list" wx:if="{{files.length > 0}}">
+    <view class="file-list-header">
+      <text>已选文件 ({{files.length}}/9)</text>
+      <text class="clear-all" bindtap="clearFiles" wx:if="{{files.length > 0}}">清空全部</text>
+    </view>
+
+    <view class="file-items">
+      <view class="file-item" wx:for="{{files}}" wx:key="index" data-file="{{item}}" data-index="{{index}}" bindlongpress="showFileMenu">
+        <view class="file-icon">
+          <text>{{getFileIcon(item.name)}}</text>
+        </view>
+        <view class="file-details">
+          <view class="file-name-row">
+            <text class="file-name">{{item.name}}</text>
+            <text class="file-size">{{item.sizeStr}}</text>
+          </view>
+          <!-- 修复：使用 wx:if 链代替三元表达式 -->
+          <view wx:if="{{item.progress > 0 && item.progress < 100}}" class="file-progress">
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{item.progress}}%"></view>
+            </view>
+            <text class="progress-text">{{item.progress}}%</text>
+          </view>
+          <view wx:elif="{{item.uploaded}}" class="file-status">
+            <text class="status-success">✓ 已上传</text>
+          </view>
+        </view>
+        <view class="file-remove" bindtap="removeFile" data-index="{{index}}" data-name="{{item.name}}">
+          <text>✕</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 上传全部按钮 -->
+    <view class="upload-all" wx:if="{{hasPendingFiles}}" bindtap="uploadAllFiles">
+      <text>上传全部 ({{pendingCount}}个)</text>
+      <text class="upload-arrow">↑</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <view class="empty-icon">📂</view>
+    <text class="empty-text">点击上方按钮选择文件</text>
+  </view>
+</view>
+
+<!-- 文件操作菜单弹窗 -->
+<view class="action-sheet" wx:if="{{showFileMenu}}">
+  <view class="action-mask" bindtap="closeFileMenu"></view>
+  <view class="action-content">
+    <view class="action-header">
+      <!-- 修复：不使用可选链操作符 -->
+      <text>{{selectedFile ? selectedFile.name : ''}}</text>
+      <text class="action-close" bindtap="closeFileMenu">✕</text>
+    </view>
+    <view class="action-btns">
+      <view class="action-btn" bindtap="retryUpload" wx:if="{{selectedFile && !selectedFile.uploaded}}">
+        <text class="action-icon">↻</text>
+        <text>重新上传</text>
+      </view>
+      <view class="action-btn" bindtap="deleteFile">
+        <text class="action-icon">🗑️</text>
+        <text>删除文件</text>
+      </view>
+      <view class="action-btn" bindtap="shareFile">
+        <text class="action-icon">↗️</text>
+        <text>分享文件</text>
+      </view>
+    </view>
+    <view class="action-cancel" bindtap="closeFileMenu">取消</view>
+  </view>
+</view>
+</view>
